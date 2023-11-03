@@ -58,6 +58,14 @@ short * reverseArray(short * array, int len) {
     return newArray;
 }
 
+short * actualReverse(short * array, int len) {
+    short * newArray = calloc(1,sizeof(short) * len);
+    for (int i = 1; i <= len;i++) {
+        newArray[len - i] = array[i-1];
+    }
+    return newArray;
+}
+
 /* initBigInt method:
 Input: a number represented as a string.
 Output: The bigInt * object representing it.
@@ -100,18 +108,45 @@ bigInt * initBigInt(char * numberString) {
     return outputBigInt;
 }
 
+/*
+                    sumBigInts method:
+Input: 2 bigInt pointers
+Output: 1 bigInt pointer (the result of the addition)
+It outputs the result of the addition of two ordinary big ints. The algorithm employed is
+the classic digit-wise addition algorithm we are all familiar with. 
+*/
+
 bigInt * sumBigInts(bigInt * number1, bigInt * number2) {
+    // Init the carry flag to 0; it will be used to check if the number of digits
+    // will be increased during the addition.
     int carryFlag = 0;
+    // Initialize the return value of bigInt type and allocate space for it with calloc.
     bigInt * result;
     result = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
+    // Initialize the array of short ints that will represent the digits of our return value
     short * resultDigits;
+    /* Initialize the reversed arrays of the digits of the 2 initial numbers (bigInt numbers)
+        We do this in order to start from  the smallest digit and go up to the largest one.
+        If we didnt do this we would go the other way around.
+    */ 
     short * temp1 = reverseArray(number1->digits, number1->digitCount);
     short * temp2 = reverseArray(number2->digits, number2->digitCount);
+    // Initialize our representation string
+    char * outputRepresentation;
+    // Some if-else clauses:
+    // First case: we are summing two numbers with the same number of digits
     if (number1->digitCount == number2->digitCount) {
+        // Initialize the variable count; it doesn't matter if we initialize it to be equal to
+        // number1->digitCount or number2->digitCount since we're supposing they are the same.
         int count = number1->digitCount;
+        // Allocate bytes for it using calloc
         resultDigits = calloc(1,sizeof(short) * count);
+        // We now loop through the digits and performing the digit-wise summing algorithm we are all familiar with.
         for (int i = 1; i <= count; i++) {
+            // We place the sum of the digits at index i of the reversed digit lists for number1 and number2 
+            // in the (i-1)th index of the resultDigits array.
             resultDigits[i - 1] = temp1[i] + temp2[i];
+            // We now check if it is bigger than or equal to 10: if that is the case we implement the carry logic. 
             if (resultDigits[i-1] >= 10) {
                 if (i == count) {
                     resultDigits = realloc(resultDigits, sizeof(short)* (count + 1));
@@ -133,10 +168,23 @@ bigInt * sumBigInts(bigInt * number1, bigInt * number2) {
                 
             }
         }
-        result->digits = resultDigits;
+        // We know reverse back the result to keep it consistent.
+        short * actualDigits = actualReverse(resultDigits, number1->digitCount + carryFlag);
+        // We place the object properties that we desire
+        result->digits = actualDigits;
         result->digitCount = number1->digitCount + carryFlag;
+        // We now calculate the string representation of our bignum.
+        // (I wanna remove this extra loop someday)
+        outputRepresentation = calloc(1, sizeof(char) * (result->digitCount));
+        for (int i = 0; i < result->digitCount; i++) {
+            outputRepresentation[i] = (char)(result->digits[i]) + 48;
+        }
+        result->representation = outputRepresentation;
+        // We now return the result of our bigInt addition.  
         return result;
     } else if (number1->digitCount > number2->digitCount) {
+        // case #2: number1 has more digits than number2
+        // Most of the logic is the same: for this reason I will only comment the different parts.
         int count = number2->digitCount;
         int thisDigit = number1->digits[0];
         resultDigits = calloc(1,sizeof(short)* (number1->digitCount));
@@ -169,8 +217,16 @@ bigInt * sumBigInts(bigInt * number1, bigInt * number2) {
             resultDigits = realloc(resultDigits, sizeof(short)* (count + 1));
             resultDigits[number1->digitCount] = 1;
         }
-        result->digits = resultDigits;
+        short * actualDigits = actualReverse(resultDigits, number1->digitCount + carryFlag);
+        result->digits = actualDigits;
         result->digitCount = number1->digitCount + carryFlag;
+        // We now calculate the string representation of our bignum.
+        // (I wanna remove this extra loop someday)
+        outputRepresentation = calloc(1, sizeof(char) * (result->digitCount));
+        for (int i = 0; i < result->digitCount; i++) {
+            outputRepresentation[i] = (char)(result->digits[i]) + 48;
+        }
+        result->representation = outputRepresentation;
         return result;
     } else {
         int count = number1->digitCount;
@@ -205,21 +261,32 @@ bigInt * sumBigInts(bigInt * number1, bigInt * number2) {
             resultDigits = realloc(resultDigits, sizeof(short)* (count + 1));
             resultDigits[number2->digitCount ] = 1;
         }
-        result->digits = resultDigits;
+        short * actualDigits = actualReverse(resultDigits, number2->digitCount + carryFlag);
+        result->digits = actualDigits;
         result->digitCount = number2->digitCount + carryFlag;
+        // We now calculate the string representation of our bignum.
+        // (I wanna remove this extra loop someday)
+        outputRepresentation = calloc(1, sizeof(char) * (result->digitCount));
+        for (int i = 0; i < result->digitCount; i++) {
+            outputRepresentation[i] = (char)(result->digits[i]) + 48;
+        }
+        result->representation = outputRepresentation;
         return result;
     }
 }
 
 int main(void) {
-    char string[] = "121313212131321202301213132120230913891238912312032301823018123081230121313212131321202309138912389123120323018230181230812301213132913891238912312032301823018123081230121313212023012131321202309138912389123120323018230181121313212023012131321202309138912389123120323018230181230812301213132121313212023091389123891231203230182301812308123012131329138912389123120323018230181230812301213132121313212023012131321202309138912389123120323018230181230812301213132121313212023091389123891231203230182301812308123012131329138912389123120323018230181230812301213132230812301213132121313212023091389123891231203230182301812308123012131329138912389123120323018230181230812301213132";
-    char string2[] = "12131321202309138912389123120323018230181230812301213132230920120212308123123121313212023012131321202309138912389123120323018230181230812301213132121313212023091389123891231203230182301812308123012131329138912389123120323018230181230812301213132121313212023012131321202309138912389123120323018230181230812301213132121313212023091389123891231203230182301812308123012131329138912389123120323018230181230812301213132782104402416";
+    char string[] = "546";
+    char string2[] = "341";
     bigInt * lol = initBigInt(string);
     bigInt * lol2 = initBigInt(string2);
     bigInt * result = sumBigInts(lol,lol2);
-    short * temp1 = reverseArray(lol->digits, lol->digitCount);
+    short * temp1 = actualReverse(result->digits, result->digitCount);
     for (int i = 0; i < result->digitCount; i++) {
         printf("%d \n", result->digits[i]);
+    }
+    for (int i = 0; i< lol->digitCount; i++) {
+        printf("%d \n", lol->digits[i]);
     }
     free(lol);
     free(lol2);
