@@ -72,6 +72,7 @@ char * removeUnnecessaryZeros(char * string, int length) {
             }
             return newString;
         } else if (string[0] == '-') {
+            newString[0] = '-';
             if (string[1] == '0') {
                 int index;
                 for (int j = 2; j < length; j++) {
@@ -86,7 +87,7 @@ char * removeUnnecessaryZeros(char * string, int length) {
                 for (int i = index; i < length; i++) {
                     newStringLength++;
                     newString = realloc(newString,sizeof(char)*newStringLength);
-                    newString[i - index] = string[i];
+                    newString[i - index+1] = string[i];
                 }
                 return newString;
             } else {
@@ -145,7 +146,7 @@ It works similarly to how a constructor would work in OOP languages like Java.
 */
 
 bigInt * initBigInt(char * numberString) {
-    int negativeFlag ;
+    int negativeFlag;
     int length = 1;
     char * outputRepresentation = calloc(1, sizeof(char)*length);
     int digitCount = 1;
@@ -165,6 +166,7 @@ bigInt * initBigInt(char * numberString) {
         outputRepresentation[0] = '-';
         length++;
         outputRepresentation = realloc(outputRepresentation, sizeof(char) * length);
+        i++;
     } else {
         negativeFlag = 0;
     }
@@ -367,63 +369,99 @@ int bigIntIsEqualTo(bigInt * number1, bigInt * number2) {
     }
 }
 
+int bigIntLessThan(bigInt * number1, bigInt * number2);
+
 /* Function to determine whether a bigInt is greater than another bigInt*/
 
 int bigIntGreaterThan(bigInt * number1, bigInt * number2) {
-    if (number1->digitCount > number2->digitCount) {
-        return 1;
-    } else if (number1->digitCount < number2->digitCount) {
-        return 0;
-    } else {
-        if (number1->digits[0] == number2->digits[0]) {
-            int j = 0;
-            while (number1->digits[j] == number2->digits[j] && j < number1->digitCount) {
-                j++;
-            }
-            if (j == number1->digitCount) {
-                return 0;
-            } else {
-                if (number1->digits[j] > number2->digits[j]) {
-                    return 1;
-                } else if (number1->digits[j] < number2->digits[j]) {
-                    return 0;
-                }
-            }
-        } else if (number1->digits[0] > number2->digits[0]) {
+    if (number1->signFlag == 0 && number2->signFlag == 0) {
+        if (number1->digitCount > number2->digitCount) {
             return 1;
-        } else {
+        } else if (number1->digitCount < number2->digitCount) {
             return 0;
+        } else {
+            if (number1->digits[0] == number2->digits[0]) {
+                int j = 0;
+                while (number1->digits[j] == number2->digits[j] && j < number1->digitCount) {
+                    j++;
+                }
+                if (j == number1->digitCount) {
+                    return 0;
+                } else {
+                    if (number1->digits[j] > number2->digits[j]) {
+                        return 1;
+                    } else if (number1->digits[j] < number2->digits[j]) {
+                        return 0;
+                    }
+                }
+            } else if (number1->digits[0] > number2->digits[0]) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
+    } else if (number1->signFlag == 1 && number2->signFlag == 0) {
+        return 0;
+    } else if (number1->signFlag == 0 && number2->signFlag == 1) {
+        return 1;
+    } else {
+        bigInt * temp1 = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        bigInt * temp2 = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
+        temp1->signFlag = 0;
+        temp2->signFlag = 0;
+        temp1->digits = number1->digits;
+        temp2->digits = number2->digits;
+        temp1->digitCount = number1->digitCount;
+        temp2->digitCount = number2->digitCount;
+        int abc = bigIntLessThan(temp1,temp2);
+        return abc;
     }
 }
 
 /* Function to determine whether a bigInt is smaller than another bigInt*/
 
 int bigIntLessThan(bigInt * number1, bigInt * number2) {
-    if (number1->digitCount > number2->digitCount) {
-        return 0;
-    } else if (number1->digitCount < number2->digitCount) {
-        return 1;
-    } else {
-        if (number1->digits[0] == number2->digits[0]) {
-            int j = 0;
-            while (number1->digits[j] == number2->digits[j] && j < number1->digitCount) {
-                j++;
-            }
-            if (j == number1->digitCount) {
+    if (number1->signFlag == 0 && number2->signFlag == 0) {
+        if (number1->digitCount > number2->digitCount) {
+            return 0;
+        } else if (number1->digitCount < number2->digitCount) {
+            return 1;
+        } else {
+            if (number1->digits[0] == number2->digits[0]) {
+                int j = 0;
+                while (number1->digits[j] == number2->digits[j] && j < number1->digitCount) {
+                    j++;
+                }
+                if (j == number1->digitCount) {
+                    return 0;
+                } else {
+                    if (number1->digits[j] > number2->digits[j]) {
+                        return 0;
+                    } else if (number1->digits[j] < number2->digits[j]) {
+                        return 1;
+                    }
+                }
+            } else if (number1->digits[0] > number2->digits[0]) {
                 return 0;
             } else {
-                if (number1->digits[j] > number2->digits[j]) {
-                    return 0;
-                } else if (number1->digits[j] < number2->digits[j]) {
-                    return 1;
-                }
+                return 1;
             }
-        } else if (number1->digits[0] > number2->digits[0]) {
-            return 0;
-        } else {
-            return 1;
         }
+    } else if (number1->signFlag == 0 && number2->signFlag == 1) {
+        return 0;
+    } else if (number1->signFlag == 1 && number2->signFlag == 0) {
+        return 1;
+    } else {
+        bigInt * temp1 = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        bigInt * temp2 = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
+        temp1->signFlag = 0;
+        temp2->signFlag = 0;
+        temp1->digits = number1->digits;
+        temp2->digits = number2->digits;
+        temp1->digitCount = number1->digitCount;
+        temp2->digitCount = number2->digitCount;
+        int abc = bigIntGreaterThan(temp1,temp2);
+        return abc;
     }
 }
 
@@ -551,13 +589,15 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
         // We now return the result of our bigInt addition.  
         return result;
     } else {
-        
+
     }
 }
 
 int main(void) {
-    bigInt * lol1 = initBigInt("763");
-    printf("%s \n", lol1->representation);
+    bigInt * lol1 = initBigInt("-22");
+    bigInt * lol2 = initBigInt("87");
+    printf("%d : %d \n", bigIntGreaterThan(lol1,lol2), bigIntIsEqualTo(lol1,lol2));
     free(lol1);
+    free(lol2);
     return 0;
 }
