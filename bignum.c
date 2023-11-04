@@ -461,6 +461,12 @@ int bigIntIsEqualTo(bigInt * number1, bigInt * number2) {
     }
 }
 
+// Function to determine whether two bigInts are not equal
+
+int bigIntIsNequalTo(bigInt * number1, bigInt * number2) {
+    return bigIntIsEqualTo(number1,number2) ? 0: 1;
+}
+
 int bigIntLessThan(bigInt * number1, bigInt * number2);
 
 /* Function to determine whether a bigInt is greater than another bigInt*/
@@ -659,13 +665,6 @@ bigInt * bigIntMin(bigInt * number1, bigInt * number2) {
     }
 }
 
-/* Iterative multiplication algorithm for big ints: 
-Note: I strongly advise against using it, since it's very slow. I included it only for
-completeness sake. 
-*/
-
-// ------  not coded yet ------
-
 /* subtractBigInts function:
 input: 2 big ints number1 and number2 
 output: the difference between the two, number1 - number2 
@@ -767,7 +766,7 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
                 bigInt * aidBigInt = initBigInt(aidBigIntString);
                 bigInt * actualOutput = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
                 actualOutput = subtractBigInts(aidBigInt, result);
-                return actualOutput;
+                return negateBigInt(actualOutput);
             }
         } else if (number1->digitCount > number2->digitCount) {
             int count = number2->digitCount;
@@ -811,7 +810,8 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
             // We now return the result of our bigInt addition.  
             return result;
         } else {
-
+            // Handle the case in which the number of digits of number2 is bigger than the one of number1
+            return negateBigInt(subtractBigInts(number2,number1));
         }
     } else if (number1->signFlag == 1 && number2->signFlag == 0) {
         bigInt * temp1 = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
@@ -834,9 +834,16 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
     }
 }
 
+/* Iterative multiplication algorithm for big ints: 
+Note: I strongly advise against using it, since it's very slow. I included it only for
+completeness sake. 
+*/
+
+// not coded yet.
+
 int main(void) {
-    bigInt * lol1 = initBigInt("4001");
-    bigInt * lol2 = initBigInt("1234");
+    bigInt * lol1 = initBigInt("600");
+    bigInt * lol2 = initBigInt("4001");
     bigInt * abc = subtractBigInts(lol1,lol2);
     printf("%s \n", abc->representation);
     free(abc);
