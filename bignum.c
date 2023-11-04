@@ -687,46 +687,88 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
     // case #1: the number of digits of the first number is the same as the second
     if (number1->signFlag == 0 && number2->signFlag == 0) {
         if (number1->digitCount == number2->digitCount) {
-            int count = number1->digitCount;
-            // Allocate space for our resultDigits output bigInt.
-            resultDigits = calloc(1, sizeof(short) * count);
-            // Loop through the digits:
-            for (int i = 0; i < count; i++) {
-                // Place the difference of temp1[i] and temp2[i] in resultDigits[i], i.e
-                // the difference between the ith digits of the 1st and 2nd number.
-                resultDigits[i] = temp1[i] - temp2[i];
-                // Implement the carry logic:
-                // We check if the ith element of the resultDigits array is less than zero:
-                // if that is the case, we will borrow one from the next digit (on the left).
-                if (resultDigits[i] < 0) {
-                    resultDigits[i] = (resultDigits[i] % 10) + 10;
-                    int j = 0;
-                    subtractionIterationLabel1:
-                    j++;
-                    temp1[i + j] -= 1;
-                    temp1[i+j] = (temp1[i+j]%10) + 10;
-                    goto subtractionIterationLabel1;
-                    
+            if (bigIntBiggerEqThan(number1,number2)) {
+                int count = number1->digitCount;
+                // Allocate space for our resultDigits output bigInt.
+                resultDigits = calloc(1, sizeof(short) * count);
+                // Loop through the digits:
+                for (int i = 0; i < count; i++) {
+                    // Place the difference of temp1[i] and temp2[i] in resultDigits[i], i.e
+                    // the difference between the ith digits of the 1st and 2nd number.
+                    resultDigits[i] = temp1[i] - temp2[i];
+                    // Implement the carry logic:
+                    // We check if the ith element of the resultDigits array is less than zero:
+                    // if that is the case, we will borrow one from the next digit (on the left).
+                    if (resultDigits[i] < 0) {
+                        resultDigits[i] += 10;
+                        int j = 0;
+                        temp1[i+1] -= 1;
+
+                    }
                 }
+                // Check if the subtraction reduced the number of digits by one.
+                if (resultDigits[count - 1] == 0) {
+                    carryFlag = -1;
+                }
+                // We know reverse back the result to keep it consistent.
+                short * actualDigits = actualReverse(resultDigits, number1->digitCount + carryFlag);
+                // We place the object properties that we desire
+                result->digits = actualDigits;
+                result->digitCount = number1->digitCount + carryFlag;
+                // We now calculate the string representation of our bignum.
+                // (I wanna remove this extra loop someday)
+                outputRepresentation = calloc(1, sizeof(char) * (result->digitCount));
+                for (int i = 0; i < result->digitCount; i++) {
+                    outputRepresentation[i] = (char)(result->digits[i]) + 48;
+                }
+                result->representation = removeUnnecessaryZeros(outputRepresentation, result->digitCount);
+                // We now return the result of our bigInt addition.  
+                return result;
+            } else {
+                int count = number1->digitCount;
+                // Allocate space for our resultDigits output bigInt.
+                resultDigits = calloc(1, sizeof(short) * count);
+                // Loop through the digits:
+                for (int i = 0; i < count; i++) {
+                    // Place the difference of temp1[i] and temp2[i] in resultDigits[i], i.e
+                    // the difference between the ith digits of the 1st and 2nd number.
+                    resultDigits[i] = temp1[i] - temp2[i];
+                    // Implement the carry logic:
+                    // We check if the ith element of the resultDigits array is less than zero:
+                    // if that is the case, we will borrow one from the next digit (on the left).
+                    if (resultDigits[i] < 0) {
+                        resultDigits[i] += 10;
+                        int j = 0;
+                        temp1[i + 1] -= 1;
+                    }
+                }
+                // Check if the subtraction reduced the number of digits by one.
+                if (resultDigits[count - 1] == 0) {
+                    carryFlag = -1;
+                }
+                // We know reverse back the result to keep it consistent.
+                short * actualDigits = actualReverse(resultDigits, number1->digitCount + carryFlag);
+                // We place the object properties that we desire
+                result->digits = actualDigits;
+                result->digitCount = number1->digitCount + carryFlag;
+                // We now calculate the string representation of our bignum.
+                // (I wanna remove this extra loop someday)
+                outputRepresentation = calloc(1, sizeof(char) * (result->digitCount));
+                for (int i = 0; i < result->digitCount; i++) {
+                    outputRepresentation[i] = (char)(result->digits[i]) + 48;
+                }
+                result->representation = removeUnnecessaryZeros(outputRepresentation, result->digitCount);
+                // We now return the result of our bigInt addition.  
+                char * aidBigIntString = calloc(1, sizeof(char)* (number1->digitCount + 1));
+                aidBigIntString[0] = '1';
+                for (int j = 1; j <= number1->digitCount; j++) {
+                    aidBigIntString[j] = '0';
+                }
+                bigInt * aidBigInt = initBigInt(aidBigIntString);
+                bigInt * actualOutput = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+                actualOutput = subtractBigInts(aidBigInt, result);
+                return actualOutput;
             }
-            // Check if the subtraction reduced the number of digits by one.
-            if (resultDigits[count - 1] == 0) {
-                carryFlag = -1;
-            }
-            // We know reverse back the result to keep it consistent.
-            short * actualDigits = actualReverse(resultDigits, number1->digitCount + carryFlag);
-            // We place the object properties that we desire
-            result->digits = actualDigits;
-            result->digitCount = number1->digitCount + carryFlag;
-            // We now calculate the string representation of our bignum.
-            // (I wanna remove this extra loop someday)
-            outputRepresentation = calloc(1, sizeof(char) * (result->digitCount));
-            for (int i = 0; i < result->digitCount; i++) {
-                outputRepresentation[i] = (char)(result->digits[i]) + 48;
-            }
-            result->representation = removeUnnecessaryZeros(outputRepresentation, result->digitCount);
-            // We now return the result of our bigInt addition.  
-            return result;
         } else if (number1->digitCount > number2->digitCount) {
             int count = number2->digitCount;
             // Allocate space for our resultDigits output bigInt.
@@ -777,7 +819,7 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
         temp1->signFlag = 0;
         temp1->digits = number1->digits;
         bigInt * resultIntermediate = sumBigInts(temp1, number2);
-        bigInt * result2 = negatedResult(resultIntermediate);
+        bigInt * result2 = negateBigInt(resultIntermediate);
         return result2;
     } else if (number1->signFlag == 0 && number2->signFlag == 1) {
         bigInt * temp2 = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
@@ -792,17 +834,11 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
     }
 }
 
-// So far:
-// Comparison operators are working (judging from the tests)
-// Addition for all integers (positive and negative) is fully functioning
-// Subtraction btwn positive integers is fully functioning
-
-
 int main(void) {
-    bigInt * lol1 = initBigInt("-11");
+    bigInt * lol1 = initBigInt("4001");
     bigInt * lol2 = initBigInt("1234");
-    bigInt * abc = sumBigInts(lol1,lol2);
-    
+    bigInt * abc = subtractBigInts(lol1,lol2);
+    printf("%s \n", abc->representation);
     free(abc);
     free(lol1);
     free(lol2);
