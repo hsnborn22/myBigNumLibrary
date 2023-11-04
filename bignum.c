@@ -485,6 +485,34 @@ int bigIntBiggerEqThan(bigInt * number1, bigInt * number2) {
     }
 }
 
+/* Function max:
+input: 2 bigInt pointers, number1 and number2
+output: another bigInt pointer.
+Returns the bigger between the two big ints.
+*/
+
+bigInt * bigIntMax(bigInt * number1, bigInt * number2) {
+    if (bigIntBiggerEqThan(number1,number2)) {
+        return number1;
+    } else {
+        return number2;
+    }
+}
+
+/* Function max:
+input: 2 bigInt pointers, number1 and number2
+output: another bigInt pointer.
+Returns the smaller between the two big ints.
+*/
+
+bigInt * bigIntMin(bigInt * number1, bigInt * number2) {
+    if (bigIntLessEqThan(number1,number2)) {
+        return number1;
+    } else {
+        return number2;
+    }
+}
+
 /* Iterative multiplication algorithm for big ints: 
 Note: I strongly advise against using it, since it's very slow. I included it only for
 completeness sake. 
@@ -594,8 +622,8 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
 }
 
 int main(void) {
-    bigInt * lol1 = initBigInt("-22");
-    bigInt * lol2 = initBigInt("87");
+    bigInt * lol1 = initBigInt("0");
+    bigInt * lol2 = initBigInt("22");
     printf("%d : %d \n", bigIntGreaterThan(lol1,lol2), bigIntIsEqualTo(lol1,lol2));
     free(lol1);
     free(lol2);
