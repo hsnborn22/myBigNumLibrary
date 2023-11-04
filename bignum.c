@@ -12,6 +12,7 @@ typedef struct BIGNUM_INTEGER_STRUCT {
     char * representation;
     short * digits;
     int digitCount;
+    int signFlag;
 } bigInt;
 
 /* Max Method:
@@ -27,34 +28,73 @@ int max(int a, int b) {
     }
 }
 
+int checkIfAllZeros(char * string, int length) {
+    int nonZeroFlag = 1;
+    for (int i = 0; i < length; i++) {
+        if (string[i] > 48 && string[i] <= 57) {
+            nonZeroFlag = 0;
+        } else {
+            // Do nothing
+        }
+    }
+    return nonZeroFlag;
+}
+
 /* Remove unnecessary zero method:
 Input: a string representation of a bigInt
 output: a string representation of the same bigInt without the unnecessary 0s. 
 */
 
 char * removeUnnecessaryZeros(char * string, int length) {
-    int newStringLength = 0;
-    char * newString;
-    newString = calloc(1,sizeof(char));
-    if (string[0] == '0') {
-        int index;
-        for (int j = 1; j < length; j++) {
-            if (string[j] == '0') {
-                // skip
-            } else {
-                // save the index where the string of 'unnecessary' zeros end
-                index = j;
-                break;
-            }
-        }
-        for (int i = index; i < length; i++) {
-            newStringLength++;
-            newString = realloc(newString,sizeof(char)*newStringLength);
-            newString[i - index] = string[i];
-        }
-        return newString;
+    if (checkIfAllZeros(string, length)) {
+        char * result = calloc(1, sizeof(char));
+        result[0] = '0';
+        return result;
     } else {
-        return string;
+        int newStringLength = 0;
+        char * newString;
+        newString = calloc(1,sizeof(char));
+        if (string[0] == '0') {
+            int index;
+            for (int j = 1; j < length; j++) {
+                if (string[j] == '0') {
+                    // skip
+                } else {
+                    // save the index where the string of 'unnecessary' zeros end
+                    index = j;
+                    break;
+                }
+            }
+            for (int i = index; i < length; i++) {
+                newStringLength++;
+                newString = realloc(newString,sizeof(char)*newStringLength);
+                newString[i - index] = string[i];
+            }
+            return newString;
+        } else if (string[0] == '-') {
+            if (string[1] == '0') {
+                int index;
+                for (int j = 2; j < length; j++) {
+                    if (string[j] == '0') {
+                        // skip
+                    } else {
+                        // save the index where the string of 'unnecessary' zeros end
+                        index = j;
+                        break;
+                    }
+                }
+                for (int i = index; i < length; i++) {
+                    newStringLength++;
+                    newString = realloc(newString,sizeof(char)*newStringLength);
+                    newString[i - index] = string[i];
+                }
+                return newString;
+            } else {
+                return string;
+            }
+        } else {
+            return string;
+        }
     }
 }
 
@@ -105,6 +145,7 @@ It works similarly to how a constructor would work in OOP languages like Java.
 */
 
 bigInt * initBigInt(char * numberString) {
+    int negativeFlag ;
     int length = 1;
     char * outputRepresentation = calloc(1, sizeof(char)*length);
     int digitCount = 1;
@@ -118,6 +159,14 @@ bigInt * initBigInt(char * numberString) {
         while (numberString[i] == ' ') {
             i++;
         }
+    }
+    if (numberString[i] == '-') {
+        negativeFlag = 1;
+        outputRepresentation[0] = '-';
+        length++;
+        outputRepresentation = realloc(outputRepresentation, sizeof(char) * length);
+    } else {
+        negativeFlag = 0;
     }
     while (numberString[i] >= 48 && numberString[i] <= 57) {
         char currentChar = numberString[i] - 48;
@@ -137,6 +186,7 @@ bigInt * initBigInt(char * numberString) {
     }
     outputBigInt->digits = newDigits;
     outputBigInt->representation = removeUnnecessaryZeros(outputRepresentation, outputBigInt->digitCount);
+    outputBigInt->signFlag = negativeFlag;
     return outputBigInt;
 }
 
@@ -310,7 +360,11 @@ bigInt * sumBigInts(bigInt * number1, bigInt * number2) {
 /* Function to determine whether two bigInts are equal*/
 
 int bigIntIsEqualTo(bigInt * number1, bigInt * number2) {
-    return strcmp(number1->representation, number2->representation);
+    if (strcmp(number1->representation, number2->representation) == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 /* Function to determine whether a bigInt is greater than another bigInt*/
@@ -502,18 +556,8 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
 }
 
 int main(void) {
-    char string[] = "1001";
-    char string2[] = "2000";
-    bigInt * lol = initBigInt(string);
-    bigInt * lol2 = initBigInt(string2);
-    bigInt * result = subtractBigInts(lol,lol2);
-    for (int i = 0; i < result->digitCount; i++) {
-        printf("%d \n", result->digits[i]);
-    }
-    printf("String:\n");
-    printf("%s \n", result->representation);
-
-    free(result);
-    free(lol);
+    bigInt * lol1 = initBigInt("763");
+    printf("%s \n", lol1->representation);
+    free(lol1);
     return 0;
 }
