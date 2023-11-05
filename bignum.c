@@ -563,6 +563,31 @@ int bigIntLessThan(bigInt * number1, bigInt * number2) {
     }
 }
 
+/* bigIntCopyInto function:
+input 1: (bigInt * pointer type) the bigInt to copy
+input 2: (bigInt * pointer type) the bigInt we're copying the first bigInt to
+*/
+
+void bigIntCopyInto(bigInt * number1, bigInt * number2) {
+    // copy all attributes of number 1 into number2:
+    number2->representation = number1->representation;
+    number2->signFlag = number1->signFlag;
+    number2->digitCount = number1->digitCount;
+    number2->digits = number1->digits;
+}
+
+// bigIntCopy function (this time we're not copying a big int into another)
+// but rather we're returning a copy of a bigInt
+
+bigInt * bigIntCopy(bigInt * number) {
+    bigInt * result = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+    result->digits = number->digits;
+    result->representation = number->representation;
+    result->signFlag = number->signFlag;
+    result->digitCount = number->digitCount;
+    return result;
+}
+
 /* Function to determine whether a bigInt is less than or equal to another bigInt */
 
 int bigIntLessEqThan(bigInt * number1, bigInt * number2) {
@@ -834,17 +859,78 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
     }
 }
 
-/* Iterative multiplication algorithm for big ints: 
-Note: I strongly advise against using it, since it's very slow. I included it only for
-completeness sake. 
+/*
+Multiplication via classical algorithm 
+time complexity: O(n^2)
 */
 
-// not coded yet.
+bigInt * classicMultiply(bigInt* number1, bigInt* number2) {
+    int len1 = number1->digitCount;
+    int len2 = number2->digitCount;
+    if (number1->signFlag == number2->signFlag) {
+        bigInt * output = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        short * num1 = number1->digits;
+        short * num2 = number2->digits;
+        // Allocate memory for the result and initialize it to 0
+        int resultLen = len1 + len2;
+        short * result = calloc(1,sizeof(short)*resultLen);
+        for (int i = 0; i < resultLen; i++) {
+            result[i] = 0;
+        }
+
+        // Perform multiplication
+        for (int i = 0; i < len1; i++) {
+            int carry = 0;
+            for (int j = 0; j < len2; j++) {
+                int product = num1[len1 - 1 - i] * num2[len2 - 1 - j] + result[i + j] + carry;
+                result[i + j] = product % 10; // Store the units place
+                carry = product / 10;          // Update the carry
+            }
+            result[i + len2] = carry;
+        }
+        // We need to reverse the digits to keep it consistent with the others.
+        short * actualDigits = actualReverse(result, resultLen);
+        output->digits = actualDigits;
+        output->signFlag = 0;
+        output->digitCount = resultLen;
+        char * outputRepresentation = calloc(1, sizeof(char) * (output->digitCount));
+        for (int i = 0; i < output->digitCount; i++) {
+            outputRepresentation[i] = (char)(output->digits[i]) + 48;
+        }
+        output->representation = outputRepresentation;
+    } else if (number1->signFlag == 1 && number2->signFlag == 0) {
+        bigInt * temp1 = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        temp1->digits = number1->digits;
+        temp1->signFlag = 0;
+        temp1->digitCount = number1->digitCount; 
+        bigInt * temporaryRes = classicMultiply(temp1,number2);
+        return negateBigInt(temporaryRes);
+    } else {
+        bigInt * temp2 = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        temp2->digits = number2->digits;
+        temp2->signFlag = 0;
+        temp2->digitCount = number2->digitCount; 
+        bigInt * temporaryRes = classicMultiply(number1,temp2);
+        return negateBigInt(temporaryRes);
+    }
+}
+
+/* Multiplication via Karatsuba's algorithm
+Time complexity: O(n^1.59) (approx.)
+*/
+
+
+/* Multiplication via fast fourier transform (FFT)
+(this will be the "official" one used in the library)
+Time complexity: O(n log(n))
+*/
+
+
 
 int main(void) {
-    bigInt * lol1 = initBigInt("600");
-    bigInt * lol2 = initBigInt("4001");
-    bigInt * abc = subtractBigInts(lol1,lol2);
+    bigInt * lol1 = initBigInt("3");
+    bigInt * lol2 = initBigInt("50");
+    bigInt * abc = classicMultiply(lol1,lol2);
     printf("%s \n", abc->representation);
     free(abc);
     free(lol1);
