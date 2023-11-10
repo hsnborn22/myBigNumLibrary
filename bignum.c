@@ -854,7 +854,15 @@ bigInt * subtractBigInts(bigInt * number1, bigInt * number2) {
         bigInt * result2 = sumBigInts(number1,temp2);
         return result2;
     } else {
-        bigInt * result2 = subtractBigInts(number2,number1);
+        bigInt * temp1 = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
+        temp1->digitCount = number1->digitCount;
+        temp1->signFlag = 0;
+        temp1->digits = number1->digits;
+        bigInt * temp2 = calloc(1, sizeof(struct BIGNUM_INTEGER_STRUCT));
+        temp2->digitCount = number2->digitCount;
+        temp2->signFlag = 0;
+        temp2->digits = number2->digits;
+        bigInt * result2 = subtractBigInts(temp2,temp1);
         return result2;
     }
 }
@@ -915,25 +923,98 @@ bigInt * classicMultiply(bigInt* number1, bigInt* number2) {
     }
 }
 
+bigInt ** splitBigInt(bigInt * number, int index) {
+    bigInt * leftInt = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+    bigInt * rightInt = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+    rightInt->digitCount = number->digitCount - index;
+    leftInt->digitCount = number->digitCount - index; 
+    rightInt->signFlag = 0;
+    leftInt->signFlag = 0;
+    char * repr1 = calloc(1,sizeof(char) * (number->digitCount - index));
+    char * repr2 = calloc(1,sizeof(char) * (number->digitCount - index));
+    short * digits1 = calloc(1,sizeof(short) * (number->digitCount - index));
+    short * digits2 = calloc(1,sizeof(short) * (number->digitCount - index));
+    for (int i = 0; i < number->digitCount - index; i++) {
+        digits1[i] = number->digits[i];
+        digits2[i] = number->digits[index + i];
+        repr1[i] = (char)(digits1[i]) + 48;
+        repr2[i] = (char)(digits2[i]) + 48;
+    }
+    short * actualDigits1 = actualReverse(digits1, number->digitCount - index);
+    short * actualDigits2 = actualReverse(digits2, number->digitCount - index);
+    leftInt->digits = actualDigits1;
+    rightInt->digits = actualDigits2;
+    leftInt->representation = repr1; 
+    rightInt->representation = repr2;
+    bigInt ** output = malloc(2* sizeof(struct BIGNUM_INTEGER_STRUCT *));
+    printf("%s : %s \n", leftInt->representation, rightInt->representation);
+    output[0] = leftInt;
+    output[1] = rightInt; 
+    return output;
+}
+
+char * concatenate(char * string1, char * string2, int len1, int len2) {
+    char * output = calloc(1,sizeof(char) * (len1 + len2));
+    for (int i = 0; i < len1; i++) {
+        output[i] = string1[i];
+    }
+    for (int i = 0; i < len2; i++) {
+        output[i + len1] = string2[i];
+    }
+    return output;
+}
+
+/* Increase decimal places by n method
+(it is equivalent to multiplying by 10^n but considerably faster)
+*/
+
+bigInt * increaseDecimalBy(bigInt * number, int n) {
+    if (n == 0) {
+        return number; 
+    } else if (n > 0) {
+        bigInt * output = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        char * zeroStrings = calloc(1,sizeof(char) * n);
+        short * zeroArray = calloc(1,sizeof(short)*n);
+        for (int i = 0; i < n; i++) {
+            zeroStrings[i] = '0';
+            zeroArray[i] = 0;
+        }
+        char * temp = concatenate(number->representation, zeroStrings, number->digitCount + number->signFlag, n);
+        output->representation = temp;
+        short * total = malloc((number->digitCount + n) * sizeof(short)); 
+        memcpy(total,number->digits, (number->digitCount) * sizeof(short)); 
+        memcpy(total + number->digitCount, zeroArray, n * sizeof(short));
+        output->digits = total;
+        return output;
+    } else {
+        return initBigInt("0");
+    }
+}
+
 /* Multiplication via Karatsuba's algorithm
 Time complexity: O(n^1.59) (approx.)
 */
 
+bigInt * karatsuba(bigInt * number1, bigInt * number2) {
+    if (number1->signFlag == 0 && number2->signFlag == 0) {
+        if (number1->digitCount == 1 || number2->digitCount == 1) {
+            return classicMultiply(number1,number2);
+        }
+
+        // Calculate the max of the sizes of the two bigInt numbers we got as an input
+        int m = max(number1->digitCount, number2->digitCount);
+        // This is the index where we will perform the splitting
+        int splitIndex = m / 2;
+
+        // bigInt * z0 = karatsuba(&low1,&low2);
+        // bigInt * z1 = karatsuba(sumBigInts(&low1,&high1), sumBigInts(&low2,&high2));
+        // bigInt * z2 = karatsuba(&high1, &high2);
+
+        return number1;
+    }   
+}
 
 /* Multiplication via fast fourier transform (FFT)
 (this will be the "official" one used in the library)
 Time complexity: O(n log(n))
 */
-
-
-
-int main(void) {
-    bigInt * lol1 = initBigInt("3");
-    bigInt * lol2 = initBigInt("50");
-    bigInt * abc = classicMultiply(lol1,lol2);
-    printf("%s \n", abc->representation);
-    free(abc);
-    free(lol1);
-    free(lol2);
-    return 0;
-}
