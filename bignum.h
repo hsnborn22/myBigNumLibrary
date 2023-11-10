@@ -46,3 +46,6 @@ bigInt * bigIntMin(bigInt * number1, bigInt * number2);
 bigInt * classicMultiply(bigInt* number1, bigInt* number2);
 char * concatenate(char * string1, char * string2, int len1, int len2);
 bigInt * increaseDecimalBy(bigInt * number, int n);
+
+bigInt * splitBigIntHigh(bigInt * number, int index);
+bigInt * splitBigIntLow(bigInt * number, int index);

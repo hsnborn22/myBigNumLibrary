@@ -46,8 +46,8 @@ bigInt * classicFactorial(bigInt * value) {
 
 int main(void) {
     bigInt * abc = initBigInt("22");
-    bigInt * abc2 = initBigInt("-12304");
-    bigInt * abc3 = subtractBigInts(abc, abc2);
+    bigInt * abc2 = initBigInt("123405");
+    bigInt * abc3 = splitBigIntHigh(abc2, 2);
     printf("%s \n", abc3->representation);
     free(abc);
     free(abc3);

@@ -923,36 +923,6 @@ bigInt * classicMultiply(bigInt* number1, bigInt* number2) {
     }
 }
 
-bigInt ** splitBigInt(bigInt * number, int index) {
-    bigInt * leftInt = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
-    bigInt * rightInt = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
-    rightInt->digitCount = number->digitCount - index;
-    leftInt->digitCount = number->digitCount - index; 
-    rightInt->signFlag = 0;
-    leftInt->signFlag = 0;
-    char * repr1 = calloc(1,sizeof(char) * (number->digitCount - index));
-    char * repr2 = calloc(1,sizeof(char) * (number->digitCount - index));
-    short * digits1 = calloc(1,sizeof(short) * (number->digitCount - index));
-    short * digits2 = calloc(1,sizeof(short) * (number->digitCount - index));
-    for (int i = 0; i < number->digitCount - index; i++) {
-        digits1[i] = number->digits[i];
-        digits2[i] = number->digits[index + i];
-        repr1[i] = (char)(digits1[i]) + 48;
-        repr2[i] = (char)(digits2[i]) + 48;
-    }
-    short * actualDigits1 = actualReverse(digits1, number->digitCount - index);
-    short * actualDigits2 = actualReverse(digits2, number->digitCount - index);
-    leftInt->digits = actualDigits1;
-    rightInt->digits = actualDigits2;
-    leftInt->representation = repr1; 
-    rightInt->representation = repr2;
-    bigInt ** output = malloc(2* sizeof(struct BIGNUM_INTEGER_STRUCT *));
-    printf("%s : %s \n", leftInt->representation, rightInt->representation);
-    output[0] = leftInt;
-    output[1] = rightInt; 
-    return output;
-}
-
 char * concatenate(char * string1, char * string2, int len1, int len2) {
     char * output = calloc(1,sizeof(char) * (len1 + len2));
     for (int i = 0; i < len1; i++) {
@@ -962,6 +932,37 @@ char * concatenate(char * string1, char * string2, int len1, int len2) {
         output[i + len1] = string2[i];
     }
     return output;
+}
+
+// Strip method: removes unnecessary zeros from the digits of a bignum as well as from its string representation
+
+bigInt * strip(bigInt * number) {
+    bigInt * output = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+    char * newRepr = removeUnnecessaryZeros(number->representation, strlen(number->representation));
+    output->representation = newRepr;
+    output->signFlag = number->signFlag;
+    int newDigitsLength = 1;
+    short * newDigits = calloc(1,sizeof(short));
+    if (number->digits[0] == 0) {
+        int i = 1;
+        // Skip all 0 values at the beginning
+        while (number->digits[i] == 0) {
+            i++;
+        }
+        // once we have skipped all the unnecessary values, add the rest to the new short * array
+        for (int j = i; j < number->digitCount; j++) {
+            newDigits[j - i] = number->digits[j];
+            newDigitsLength++;
+            newDigits = realloc(newDigits, sizeof(short) * newDigitsLength);
+        }
+        output->digits = newDigits;
+        output->digitCount = newDigitsLength;
+        return output;
+    } else {
+        output->digits = number->digits;
+        output->digitCount = number->digitCount;
+        return output;
+    }
 }
 
 /* Increase decimal places by n method
@@ -988,6 +989,68 @@ bigInt * increaseDecimalBy(bigInt * number, int n) {
         return output;
     } else {
         return initBigInt("0");
+    }
+}
+
+// splitBigIntLow function:
+// Splits a bigInt number at a particular index, and returns the part from that index onwards
+
+bigInt * splitBigIntLow(bigInt * number, int index) {
+    // Declare and allocate space in the heap for the bigInt that will be returned
+    bigInt * result = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+    if (index < number->digitCount && index > 0) {
+        int lowDigitCount = 1;
+        int lowReprLength = 1;
+        char * resultRepr = calloc(1,sizeof(char));
+        short * resultDigits = calloc(1,sizeof(short));
+        for (int i = index; i < number->digitCount; i++) {
+            resultDigits[i - index] = number->digits[i];
+            lowDigitCount++;
+            resultDigits = realloc(resultDigits, sizeof(short) * lowDigitCount);
+            resultRepr[i - index] = number->representation[i];
+            lowReprLength++;
+            resultRepr = realloc(resultRepr, sizeof(char) * lowReprLength);
+        }
+        result->digits = resultDigits;
+        result->digitCount = lowDigitCount;
+        result->representation = resultRepr;
+        result->signFlag = 0;
+        bigInt * actualOutput = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        actualOutput = strip(result);
+        return actualOutput;
+    } else {
+        return number;
+    }
+}
+
+// splitBigIntHigh function
+// Splits a bignum at an index and returns the part on the left of the index
+
+bigInt * splitBigIntHigh(bigInt * number, int index) {
+    // Declare and allocate space in the heap for the bigInt that will be returned
+    bigInt * result = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+    if (index < number->digitCount && index > 0) {
+        int highDigitCount = 1;
+        int highReprLength = 1;
+        char * resultRepr = calloc(1,sizeof(char));
+        short * resultDigits = calloc(1,sizeof(short));
+        for (int i = 0; i < index; i++) {
+            resultDigits[i] = number->digits[i];
+            highDigitCount++;
+            resultDigits = realloc(resultDigits, sizeof(short) * highDigitCount);
+            resultRepr[i] = number->representation[i];
+            highReprLength++;
+            resultRepr = realloc(resultRepr, sizeof(char) * highReprLength);
+        }
+        result->digits = resultDigits;
+        result->digitCount = highDigitCount;
+        result->representation = resultRepr;
+        result->signFlag = 0;
+        bigInt * actualOutput = calloc(1,sizeof(struct BIGNUM_INTEGER_STRUCT));
+        actualOutput = strip(result);
+        return actualOutput;
+    } else {
+        return number;
     }
 }
 
